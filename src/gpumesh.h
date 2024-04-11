@@ -59,4 +59,6 @@ private:
     GLuint m_vbo { INVALID };
     GLuint m_vao { INVALID };
     GLuint m_uboMaterial { INVALID };
+public:
+    //Material mat;
 };

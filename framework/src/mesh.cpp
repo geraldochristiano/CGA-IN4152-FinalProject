@@ -128,12 +128,19 @@ std::vector<Mesh> loadMesh(const std::filesystem::path& file, bool centerAndNorm
             } else {
                 const auto& objMaterial = inMaterials[materialID];
                 mesh.material.kd = construct_vec3(objMaterial.diffuse);
+                //std::cout << objMaterial.diffuse_texname << std::endl;
                 if (!objMaterial.diffuse_texname.empty()) {
                     mesh.material.kdTexture = std::make_shared<Image>(baseDir / objMaterial.diffuse_texname);
                 }
                 mesh.material.ks = construct_vec3(objMaterial.specular);
                 mesh.material.shininess = objMaterial.shininess;
                 mesh.material.transparency = objMaterial.dissolve;
+                if (!objMaterial.roughness_texname.empty()) {
+                    mesh.material.roughnessTexture = std::make_shared<Image>(baseDir / objMaterial.roughness_texname);
+                }
+                if (!objMaterial.normal_texname.empty()) {
+                    mesh.material.normalTexture = std::make_shared<Image>(baseDir / objMaterial.normal_texname);
+                }
             }
 
             out.push_back(std::move(mesh));

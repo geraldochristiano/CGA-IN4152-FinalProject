@@ -27,11 +27,15 @@ DISABLE_WARNINGS_POP()
 Application::Application()
     : m_window("Final Project", glm::ivec2(1024, 1024), OpenGLVersion::GL45)
     , m_texture("resources/checkerboard.png")
+    //, m_texture2("resources/textures/Brick/brick-wall_albedo.png")
     , m_mainCamera(m_window)
 {
+    
     registerCallbacks();
     loadMeshes();
+    m_texture2 = new Texture("resources/textures/Brick/brick-wall_normal-ogl.png");
     prepareShaders();
+    //dictionary.append("key", Texture("resources/checkerboard.png"));
 }
 
 void Application::registerCallbacks() {
@@ -76,7 +80,7 @@ void Application::onMouseReleased(int button, int mods)
 }
 
 void Application::loadMeshes() {
-    m_meshes = GPUMesh::loadMeshGPU("resources/dragon.obj");
+    m_meshes = GPUMesh::loadMeshGPU("resources/cube.obj");
 }
 
 void Application::prepareShaders() {
@@ -129,11 +133,18 @@ void Application::update()
 
         for (GPUMesh& mesh : m_meshes) {
             m_defaultShader.bind();
+            //Material material = mesh.mat;
             glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(mvpMatrix));
             glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(m_modelMatrix));
             glUniformMatrix3fv(2, 1, GL_FALSE, glm::value_ptr(normalModelMatrix));
             if (mesh.hasTextureCoords()) {
-                m_texture.bind(GL_TEXTURE0);
+                //std::cout << material.kdTexture << std::endl;
+
+                //m_texture = new Texture("resources/checkerboard.png");
+
+               
+                //Texture tex = Texture("resources/checkerboard.png");
+                m_texture2->bind(GL_TEXTURE0);
                 glUniform1i(3, 0);
                 glUniform1i(4, GL_TRUE);
                 glUniform1i(5, GL_FALSE);
@@ -156,4 +167,27 @@ int main()
     app.update();
 
     return 0;
+}
+
+//Cubic bezier
+glm::vec3 bezier3(float t, glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, glm::vec3 p3) {
+    float it = 1.0f - t;
+    return it*it*it * p0 + 3*t*it*it * p1 + 3*t*t*it * p2 + t*t*t + p3;
+}
+
+
+glm::vec3 splines(float t, glm::vec3* points, int size) {
+    if (size < 4) {
+        return glm::vec3(0.0f);
+    }
+    if ((size-4) % 3 != 0) {
+        return glm::vec3(0.0f);
+    }
+    int nSplines = (size - 1) / 3;
+    float tval = fmod(t, nSplines);
+    int index = (int) floor(t);
+
+    
+
+    return bezier3((tval - index), points[0 + index*3], points[1 + index*3], points[2 + index*3], points[3 + index*3]);
 }

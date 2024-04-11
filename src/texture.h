@@ -7,6 +7,7 @@ DISABLE_WARNINGS_POP()
 #include <filesystem>
 #include <framework/opengl_includes.h>
 
+
 struct ImageLoadingException : public std::runtime_error {
     using std::runtime_error::runtime_error;
 };

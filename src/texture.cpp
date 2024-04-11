@@ -9,10 +9,14 @@ DISABLE_WARNINGS_POP()
 
 Texture::Texture(std::filesystem::path filePath)
 {
+    std::cout << "hi" << std::endl;
     // Load image from disk to CPU memory.
     // Image class is defined in <framework/image.h>
+    if (filePath == "null") {
+        return;
+    }
     Image cpuTexture { filePath };
-
+    
     // Create a texture on the GPU
     glCreateTextures(GL_TEXTURE_2D, 1, &m_texture);
 

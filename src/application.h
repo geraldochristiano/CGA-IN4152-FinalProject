@@ -44,6 +44,8 @@ private:
 
     std::vector<GPUMesh> m_meshes;
     Texture m_texture;
+
+    Texture *m_texture2;
     bool m_useMaterial{ true };
 
     // Projection and view matrices for you to fill in and use

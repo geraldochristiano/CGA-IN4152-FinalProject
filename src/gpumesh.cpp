@@ -13,14 +13,17 @@ GPUMaterial::GPUMaterial(const Material& material) :
     transparency(material.transparency)
 {}
 
+
 GPUMesh::GPUMesh(const Mesh& cpuMesh)
 {
     // Create uniform buffer to store mesh material (https://learnopengl.com/Advanced-OpenGL/Advanced-GLSL)
     GPUMaterial gpuMaterial(cpuMesh.material);
+    //this->mat = cpuMesh.material;
     glCreateBuffers(1, &m_uboMaterial);
     glNamedBufferData(m_uboMaterial, sizeof(GPUMaterial), &gpuMaterial, GL_STATIC_DRAW);
 
     // Figure out if this mesh has texture coordinates
+
     m_hasTextureCoords = static_cast<bool>(cpuMesh.material.kdTexture);
 
     // Create Element(/Index) Buffer Objects and Vertex Buffer Object.
