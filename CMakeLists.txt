@@ -15,7 +15,8 @@ add_executable(FinalProject
     "src/texture.cpp"
 	"src/gpumesh.cpp"
 	"src/camera.cpp"
-)
+	"src/skybox.cpp"
+	"src/reflectionmap.cpp")
 target_compile_features(FinalProject PRIVATE cxx_std_20)
 target_link_libraries(FinalProject PRIVATE CGFramework)
 enable_sanitizers(FinalProject)

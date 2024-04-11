@@ -83,7 +83,11 @@ std::vector<GPUMesh> GPUMesh::loadMeshGPU(std::filesystem::path filePath) {
     // Genereate GPU-side meshes for all sub-meshes
     std::vector<Mesh> subMeshes = loadMesh(filePath);
     std::vector<GPUMesh> gpuMeshes;
-    for (const Mesh& mesh : subMeshes) { gpuMeshes.emplace_back(mesh); }
+    for (const Mesh& mesh : subMeshes) { 
+        gpuMeshes.emplace_back(mesh);
+        const Material& mat = mesh.material;
+        std::printf("Material: kd: %f, %f, %f, \nks: %f, %f, %f, \nshininess: %f, \ntransp: %f\n", mat.kd.x, mat.kd.y, mat.kd.z, mat.ks.x, mat.ks.y, mat.ks.z, mat.shininess, mat.transparency);
+    }
     
     return gpuMeshes;
 }

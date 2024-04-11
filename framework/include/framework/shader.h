@@ -11,6 +11,7 @@ DISABLE_WARNINGS_POP()
 #include <exception>
 #include <filesystem>
 #include <vector>
+#include <unordered_map>
 
 struct ShaderLoadingException : public std::runtime_error {
     using std::runtime_error::runtime_error;
@@ -28,15 +29,26 @@ public:
     // ... Feel free to add more methods here (e.g. for setting uniforms or keeping track of texture units) ...
     void bind() const;
 
+    void setUniformMatrix4(const std::string& uniformName, const glm::mat4& value, bool transpose = false) const;
+    void setUniformMatrix3(const std::string& uniformName, const glm::mat3& value, bool transpose = false) const;
+    void setUniformVec4(const std::string& uniformName, const glm::vec4& value) const;
+    void setUniformVec3(const std::string& uniformName, const glm::vec3& value) const;
+    void setUniformFloat(const std::string& uniformName, const float& value) const;
+    void setUniformInt(const std::string& uniformName, int value) const;
+    void setUniformBool(const std::string& uniformName, bool value) const;
+
     // Bind the uniform define by the given name to the given location in its assigned block
     void bindUniformBlock(const std::string& blockName, GLuint bindingLocation) const;
+
 
 private:
     friend class ShaderBuilder;
     Shader(GLuint program);
+    GLint getUniformLocation(const std::string& uniformName) const;
 
 private:
     GLuint m_program;
+    mutable std::unordered_map<std::string, GLint> m_uniformLocCache;
 };
 
 class ShaderBuilder {
@@ -46,7 +58,7 @@ public:
     ShaderBuilder(ShaderBuilder&&) = default;
     ~ShaderBuilder();
 
-    ShaderBuilder& addStage(GLuint shaderStage, std::filesystem::path shaderFile);
+    ShaderBuilder& addStage(GLuint shaderStage, std::filesystem::path shaderFile, const std::string& prependedString = "");
     Shader build();
 
 private:
