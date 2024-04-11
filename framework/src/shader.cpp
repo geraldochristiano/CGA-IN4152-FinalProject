@@ -8,6 +8,7 @@ DISABLE_WARNINGS_POP()
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <glm/gtc/type_ptr.hpp>
 
 static constexpr GLuint invalid = 0xFFFFFFFF;
 
@@ -64,13 +65,19 @@ ShaderBuilder::~ShaderBuilder()
     freeShaders();
 }
 
-ShaderBuilder& ShaderBuilder::addStage(GLuint shaderStage, std::filesystem::path shaderFile)
+ShaderBuilder& ShaderBuilder::addStage(GLuint shaderStage, std::filesystem::path shaderFile, const std::string& prependedString)
 {
     if (!std::filesystem::exists(shaderFile)) {
         throw ShaderLoadingException(fmt::format("File {} does not exist", shaderFile.string().c_str()));
     }
 
-    const std::string shaderSource = readFile(shaderFile);
+    std::string shaderSource = readFile(shaderFile);
+    if (!prependedString.empty()) { 
+        if (size_t from = shaderSource.find("//$define_string"); from != std::string::npos) {
+            shaderSource.replace(from, 16, prependedString + "\n");
+        }    
+    }
+    
     const GLuint shader = glCreateShader(shaderStage);
     const char* shaderSourcePtr = shaderSource.c_str();
     glShaderSource(shader, 1, &shaderSourcePtr, nullptr);
@@ -158,3 +165,61 @@ static bool checkProgramErrors(GLuint program)
         return true;
     }
 }
+
+GLint Shader::getUniformLocation(const std::string& uniformName) const
+{
+    if (m_uniformLocCache.find(uniformName) != m_uniformLocCache.end()) {
+        return m_uniformLocCache[uniformName];
+    }
+
+    GLint location = glGetUniformLocation(m_program, uniformName.c_str());
+    if (location == -1)
+        std::cout << "location for " << uniformName << " is invalid" << std::endl;
+    m_uniformLocCache[uniformName] = location;
+    return location;
+}
+
+void Shader::setUniformMatrix4(const std::string& uniformName, const glm::mat4& value, bool transpose) const
+{
+    GLint location = getUniformLocation(uniformName);
+    glProgramUniformMatrix4fv(m_program, location, 1, transpose ? GL_TRUE : GL_FALSE, glm::value_ptr(value));
+}
+
+void Shader::setUniformMatrix3(const std::string& uniformName, const glm::mat3& value, bool transpose) const
+{
+    GLint location = getUniformLocation(uniformName);
+    glProgramUniformMatrix3fv(m_program, location, 1, transpose ? GL_TRUE : GL_FALSE, glm::value_ptr(value));
+}
+
+void Shader::setUniformVec3(const std::string& uniformName, const glm::vec3& value) const
+{
+    GLint location = getUniformLocation(uniformName);
+    glProgramUniform3f(m_program, location, value.x, value.y, value.z);
+}
+
+void Shader::setUniformVec4(const std::string& uniformName, const glm::vec4& value) const
+{
+    GLint location = getUniformLocation(uniformName);
+    glProgramUniform4f(m_program, location, value.x, value.y, value.z, value.w);
+}
+
+void Shader::setUniformFloat(const std::string& uniformName, const float& value) const
+{
+    GLint location = getUniformLocation(uniformName);
+    glProgramUniform1f(m_program, location, value);
+}
+
+void Shader::setUniformInt(const std::string& uniformName, int value) const
+{
+    GLint location = getUniformLocation(uniformName);
+    glProgramUniform1i(m_program, location, value);
+}
+
+void Shader::setUniformBool(const std::string& uniformName, bool value) const
+{
+    GLint location = getUniformLocation(uniformName);
+    glProgramUniform1i(m_program, location, value ? GL_TRUE : GL_FALSE);
+}
+
+
+

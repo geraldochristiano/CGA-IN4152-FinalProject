@@ -8,9 +8,9 @@ layout(std140) uniform Material // Must match the GPUMaterial defined in src/mes
 	float transparency;
 };
 
-layout(location = 3) uniform sampler2D colorMap;
-layout(location = 4) uniform bool hasTexCoords;
-layout(location = 5) uniform bool useMaterial;
+uniform sampler2D colorMap;
+uniform bool hasTexCoords;
+uniform bool useMaterial;
 
 in vec3 fragPosition;
 in vec3 fragNormal;

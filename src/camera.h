@@ -3,53 +3,41 @@
 #include "framework/window.h"
 #include "abstraction.h"
 
-
-struct PerspectiveProjection {
+class Camera {
+private: //Data to construct projection matrix
 	Radian m_fovy;
 	float m_width;
 	float m_height;
 	float m_nearDistance;
 	float m_farDistance;
+	glm::mat4 m_projectionMat; // Cache projection matrix, recalculate when necessary
 
-	// Cache projection matrix, recalculate when necessary
-	glm::mat4 m_projectionMat;
 	void recalcProjectionMatrix();
-};
-
-class Camera {
 
 private:
+	static constexpr glm::vec3 s_yAxis{ 0, 1, 0 };
 	glm::vec3 m_camPosition{ 0 };
 	glm::vec3 m_camForward{ 0.0f, 0.0f, -1.0f };
-	glm::vec3 m_WorldUpAxis{ 0.0f, 1.0f, 0.0f };
-	float m_translationSpeed = 0.02f;
-	Radian m_rotationSpeed = glm::radians(5.0f);
-	GLFWwindow* m_glfwPtr;
+	glm::vec3 m_camUp{ 0.0f, 1.0f, 0.0f };
+	Window* m_window;
 
-	PerspectiveProjection m_perspective;
-
-	// Input handling
-	double m_lastCursorPosX = 0;
-	double m_lastCursorPosY = 0;
-	bool firstMouseEnter = true;
-	bool m_receiveInput = false;
-	double m_currentYaw = - 90.0f;
-	double m_currentPitch = 0;
-
+	glm::dvec2 m_lastCursorPos{ 0 };
 
 public:
-	Camera(Window& p_window, Degree fovy = 45.0f, float nearPlaneDist = 0.1f, float farPlaneDist = 100.0f);
+	float m_translationSpeed = 0.02f;
+	float m_rotationSpeed = 0.002f;
 
-	glm::mat4 viewMatrix();
-	glm::mat4 projectionMatrix();
-	glm::mat4 viewProjMatrix();
+public:
+	Camera(Window& p_window, const glm::vec3& pos, const glm::vec3& focusAt,
+		Degree fovy, float nearPlaneDist, float farPlaneDist);
 
-	void changeTranslationSpeed(float newTranslationSpeed);
-	void changeRotationSpeed(Degree newRotationSpeed);
+	inline glm::mat4 viewMatrix() const;
+	inline glm::mat4 projectionMatrix() const;
+	glm::mat4 viewProjMatrix() const;
+	glm::vec3 position() const;
 
-	void cameraKeyCallback(int key, int scancode, int action, int mods);
-	void cameraMouseMoveCallback(const glm::vec2& cursorPos);
-	void cameraMouseButtonCallback(int button, int action, int mods);
+	void updateInput();
+
 	void cameraWindowResizeCallback(const glm::ivec2& size);
 
 };
