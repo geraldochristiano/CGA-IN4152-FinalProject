@@ -18,6 +18,7 @@ DISABLE_WARNINGS_POP()
 #include <string>
 #include <tuple>
 #include <unordered_map>
+#include <map>
 
 static void centerAndScaleToUnitMesh(std::span<Mesh> meshes);
 
@@ -62,6 +63,8 @@ std::vector<Mesh> loadMesh(const std::filesystem::path& file, bool centerAndNorm
     tinyobj::attrib_t inAttrib;
     std::vector<tinyobj::shape_t> inShapes;
     std::vector<tinyobj::material_t> inMaterials;
+    std::map<int, Material> matmap;
+    
 
     std::string warn, error;
     bool ret = tinyobj::LoadObj(&inAttrib, &inShapes, &inMaterials, &warn, &error, file.string().c_str(), baseDir.string().c_str());
@@ -127,30 +130,43 @@ std::vector<Mesh> loadMesh(const std::filesystem::path& file, bool centerAndNorm
                 mesh.material.ks = glm::vec3(0.0f);
                 mesh.material.shininess = 1.0f;
             } else {
-                const auto& objMaterial = inMaterials[materialID];
-                mesh.material.kd = construct_vec3(objMaterial.diffuse);
-                //std::cout << objMaterial.diffuse_texname << std::endl;
-                if (!objMaterial.diffuse_texname.empty()) {
-                    mesh.material.kdTexture = std::make_shared<Image>(baseDir / objMaterial.diffuse_texname);
-                    //Texture *a = new Texture(mesh.material.kdTexture.get());
-                    //std::cout << a;
-                    std::cout << "HIIIIIIII";
+                if (matmap.contains(materialID)) { 
+                    mesh.material = matmap[materialID];
+                } else {
+
+                    const auto& objMaterial = inMaterials[materialID];
+                    std::cout << materialID << "MATID";
+                    mesh.material.kd = construct_vec3(objMaterial.diffuse);
+                    std::cout << objMaterial.diffuse;
+                    // std::cout << objMaterial.diffuse_texname << std::endl;
+                    if (glm::length(mesh.material.kd) < 0.005f) { 
+                        if (!objMaterial.diffuse_texname.empty()) {
+                            mesh.material.kdTexture = std::make_shared<Image>(baseDir / objMaterial.diffuse_texname);
+                            // Texture *a = new Texture(mesh.material.kdTexture.get());
+                            // std::cout << a;
+                        }
+                        if (!objMaterial.roughness_texname.empty()) {
+                            // Blender puts roughness in map_ns for some reason, which is spec map in tinyobj
+                            mesh.material.roughnessTexture = std::make_shared<Image>(baseDir / objMaterial.roughness_texname);
+                            Texture* a = new Texture(mesh.material.roughnessTexture.get());
+                            std::cout << ".";
+                        }
+                        if (!objMaterial.normal_texname.empty()) {
+                            mesh.material.normalTexture = std::make_shared<Image>(baseDir / objMaterial.normal_texname);
+                            Texture* a = new Texture(mesh.material.normalTexture.get());
+                            std::cout << a;
+                            std::cout << ".";
+                        }
+                    }
+                    
+                    mesh.material.ks = construct_vec3(objMaterial.specular);
+                    mesh.material.shininess = objMaterial.shininess;
+                    mesh.material.transparency = objMaterial.dissolve;
+                    matmap.insert(std::make_pair(materialID, mesh.material));
+
                 }
-                if (!objMaterial.roughness_texname.empty()) {
-                    //Blender puts roughness in map_ns for some reason, which is spec map in tinyobj
-                    mesh.material.roughnessTexture = std::make_shared<Image>(baseDir / objMaterial.roughness_texname);
-                    Texture* a = new Texture(mesh.material.roughnessTexture.get());
-                    std::cout << "HIIIIIIII";
-                }
-                if (!objMaterial.normal_texname.empty()) {
-                    mesh.material.normalTexture = std::make_shared<Image>(baseDir / objMaterial.normal_texname);
-                    Texture* a = new Texture(mesh.material.normalTexture.get());
-                    std::cout << a;
-                    std::cout << "HIIIIIIII";
-                }
-                mesh.material.ks = construct_vec3(objMaterial.specular);
-                mesh.material.shininess = objMaterial.shininess;
-                mesh.material.transparency = objMaterial.dissolve;
+                
+
             }
 
             out.push_back(std::move(mesh));

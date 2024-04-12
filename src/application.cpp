@@ -47,8 +47,6 @@ Application::Application()
     loadTextures();
     loadShaders();
     initLights();
-    auto a = std::make_shared<Image>("resources/textures/Brick/brick-wall_normal-ogl.png");
-    m_texture2 = new Texture(a.get());
     //glm::vec3 m_points[4] = { glm::vec3(3, 3, 3), glm::vec3(0, 1, 2) , glm::vec3(3, -2, 1) , glm::vec3(-3, -3, -3) };
     //std::cout << m_texture2;
     //prepareShaders();
@@ -105,15 +103,20 @@ void Application::onMouseReleased(int button, int mods)
 }
 
 void Application::loadMeshes() {
-    Mesh dragon = mergeMeshes(loadMesh("resources/cube.obj")); 
-    const Material& dragonMat = dragon.material;
-    std::printf("Material: kd: %f, %f, %f, \nks: %f, %f, %f, \nshininess: %f, \ntransp: %f\n", dragonMat.kd.x, dragonMat.kd.y, dragonMat.kd.z, dragonMat.ks.x, dragonMat.ks.y, dragonMat.ks.z, dragonMat.shininess, dragonMat.transparency);
+    auto meshes = loadMesh("resources/forest3.obj");
+    for (Mesh mes : meshes) {
+        m_gpuMeshes.emplace_back(mes, DrawingMode::Opaque, glm::mat4(1.0f), MeshType::Static);
+        const Material& dragonMat = mes.material;
+        std::printf("Material: kd: %f, %f, %f, \nks: %f, %f, %f, \nshininess: %f, \ntransp: %f\n", dragonMat.kd.x, dragonMat.kd.y, dragonMat.kd.z, dragonMat.ks.x, dragonMat.ks.y, dragonMat.ks.z, dragonMat.shininess, dragonMat.transparency);
+    }
+    //Mesh dragon = mergeMeshes(loadMesh("resources/tree.obj")); 
+    
     
     Mesh unitCube = flatNormalUnitCube();
     const Material& cubeMat = unitCube.material;
     std::printf("Material: kd: %f, %f, %f, \nks: %f, %f, %f, \nshininess: %f, \ntransp: %f\n", cubeMat.kd.x, cubeMat.kd.y, cubeMat.kd.z, cubeMat.ks.x, cubeMat.ks.y, cubeMat.ks.z, cubeMat.shininess, cubeMat.transparency);
     
-    m_gpuMeshes.emplace_back(dragon, DrawingMode::Opaque, glm::mat4(1.0f), MeshType::Static);
+    //m_gpuMeshes.emplace_back(dragon, DrawingMode::Opaque, glm::mat4(1.0f), MeshType::Static);
 
     m_gpuMeshes.emplace_back(unitCube, DrawingMode::ReflectionMap, glm::translate(glm::mat4(1.0f), {0, 0, 3}), MeshType::Static);
 }

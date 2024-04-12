@@ -49,8 +49,8 @@ layout (location = 0) out vec4 fragColor;
 
 vec3 cookTorrance(vec3 lightVector, float roughness, vec3 reflectivity, vec3 color) 
 {
-	//roughness = 0.001f;
-	//reflectivity = vec3(1.0f);
+	//roughness = roughness;
+	reflectivity = vec3(0.02f);
     //vec3 lightVector = normalize(lightPos - fragPosition);
     vec3 normalVector = normalize(fragNormal);
 
@@ -121,17 +121,24 @@ void main()
 		if (useBlinnPhong){
 			vec3 H = normalize(L + V);
 			vec3 specularColor = pow(max(dot(N, H), 0.0), material.shininess) * (lightIntensities.b * lightColor) * material.ks;
+			if(dot(L, N) < 0) {
+				specularColor = vec3(0.0f);
+			}
 			fragColor = vec4(ambientColor + diffuseColor + specularColor, material.transparency);
 		} else {
 			vec3 R = reflect(-L, N);
 			float specularStrength = pow(max(dot(V, R),0.0), material.shininess);
 			vec3 specularColor = specularStrength * (lightIntensities.b * lightColor) * material.ks;
+			if(dot(L, N) < 0) {
+				specularColor = vec3(0.0f);
+			}
 			fragColor = vec4(ambientColor + diffuseColor + specularColor, material.transparency);
 		}
 
-		if(hasTexCoords) {
+		//PBR should have no kd value
+		if(hasTexCoords && length(material.kd) < 0.005f) {
 			vec3 color = texture(kdtex, fragTexCoord).rgb;
-			float roughness = texture(roughnesstex, fragTexCoord).a;
+			float roughness = texture(roughnesstex, fragTexCoord).r;
 			fragColor = vec4(cookTorrance(L, roughness, material.ks, color)*lightColor, 1.0f);
 			
 		}
