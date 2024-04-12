@@ -30,14 +30,18 @@ uniform vec3 lightColor = vec3(1,1,1);
 uniform vec3 lightIntensities = vec3(0, 0.5, 1.0);
 #ifdef LIGHT_TYPE
 	#if (LIGHT_TYPE == POINT_LIGHT) 
-		uniform vec3 lightPosition;
-	#elif (LIGHT_TYPE == DIRECTIONAL_LIGHT)
-		uniform vec3 lightDirection;
-	#elif (LIGHT_TYPE == SPOT_LIGHT)
-		uniform vec3 lightPosition;
-		uniform vec3 lightDirection;
-		uniform float cutoffAngle;
-	#endif
+        uniform vec3 lightPosition;
+        uniform float attenLinear;
+        uniform float attenQuadratic;
+    #elif (LIGHT_TYPE == DIRECTIONAL_LIGHT)
+        uniform vec3 lightDirection;
+    #elif (LIGHT_TYPE == SPOT_LIGHT)
+        uniform vec3 lightPosition;
+        uniform vec3 lightDirection;
+        uniform float cutoffAngle;
+        uniform float attenLinear;
+        uniform float attenQuadratic;
+    #endif
 #else
 	const vec3 defaultLightPosition = vec3(3,3,3);
 #endif
@@ -110,6 +114,11 @@ void main()
 				vec3 L = normalize (-lightDirection);
 			#elif (LIGHT_TYPE == SPOT_LIGHT)
 				vec3 L = normalize(lightPosition - fragPosition); 
+				float theta = dot(L, normalize(-lightDirection));
+                if (theta < cutoffAngle && length(material.kd) > 0.005f){
+                    fragColor = vec4(ambientColor, 1.0);
+                    return;
+                }
 			#endif
 		#else 
 			vec3 L = normalize(defaultLightPosition - fragPosition);
@@ -119,9 +128,10 @@ void main()
 
 		// Specular
 		vec3 V = normalize(viewPos - fragPosition);
+		vec3 specularColor;
 		if (useBlinnPhong){
 			vec3 H = normalize(L + V);
-			vec3 specularColor = pow(max(dot(N, H), 0.0), material.shininess) * (lightIntensities.b * lightColor) * material.ks;
+			specularColor = pow(max(dot(N, H), 0.0), material.shininess) * (lightIntensities.b * lightColor) * material.ks;
 			if(dot(L, N) < 0) {
 				specularColor = vec3(0.0f);
 			}
@@ -129,20 +139,29 @@ void main()
 		} else {
 			vec3 R = reflect(-L, N);
 			float specularStrength = pow(max(dot(V, R),0.0), material.shininess);
-			vec3 specularColor = specularStrength * (lightIntensities.b * lightColor) * material.ks;
+			specularColor = specularStrength * (lightIntensities.b * lightColor) * material.ks;
 			if(dot(L, N) < 0) {
 				specularColor = vec3(0.0f);
 			}
 			fragColor = vec4(ambientColor + diffuseColor + specularColor, material.transparency);
 		}
 
+		// Attenuation
+
+
 		//PBR should have no kd value
 		if(hasTexCoords && length(material.kd) < 0.005f) {
 			vec3 color = texture(kdtex, fragTexCoord).rgb;
 			float roughness = texture(roughnesstex, fragTexCoord).r;
-			fragColor = vec4(cookTorrance(L, roughness, vec3(reflectivity), color)*lightColor, 1.0f);
+			fragColor = vec4(cookTorrance(L, roughness, vec3(reflectivity), color)*lightColor, material.transparency);
 			
 		}
+
+		#if (LIGHT_TYPE == POINT_LIGHT) || (LIGHT_TYPE == SPOT_LIGHT)
+            float lightToFragDist = length(lightPosition - fragPosition);
+            float attenuation = 1.0 / (1.0 + (attenLinear * lightToFragDist) + (attenQuadratic * lightToFragDist * lightToFragDist) );
+            fragColor = vec4(fragColor.rgb*attenuation, fragColor.a);
+        #endif
 	}
 }
 

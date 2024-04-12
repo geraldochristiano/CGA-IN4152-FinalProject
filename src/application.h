@@ -61,6 +61,7 @@ private:
     Shader m_reflectionMapShader;
     Shader m_refractionMapShader;
     Shader m_pointLightBlinnPhongShader;
+    Shader m_spotLightBlinnPhongShader;
     
     enum class DrawingMode {
         Opaque,

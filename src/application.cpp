@@ -78,7 +78,7 @@ void Application::loadTextures() {
 void Application::onKeyPressed(int key, int mods)
 {
     if (key == GLFW_KEY_SPACE) {
-        m_pointLights.push_back(PointLight(m_mainCamera.position(), { 1.0f,0.1f,0.1f }, {0.0, 0.6, 1.0}));
+        m_pointLights.push_back(PointLight(m_mainCamera.position(), { 1.0f,0.1f,0.1f }, {0.0, 0.6, 1.0}, 30.0f));
     }
 }
 
@@ -109,6 +109,13 @@ void Application::loadMeshes() {
         const Material& dragonMat = mes.material;
         std::printf("Material: kd: %f, %f, %f, \nks: %f, %f, %f, \nshininess: %f, \ntransp: %f\n", dragonMat.kd.x, dragonMat.kd.y, dragonMat.kd.z, dragonMat.ks.x, dragonMat.ks.y, dragonMat.ks.z, dragonMat.shininess, dragonMat.transparency);
     }
+
+   /* auto charmesh = loadMesh("resources/character.obj");
+    for (Mesh mes : charmesh) {
+        m_gpuMeshes.emplace_back(mes, DrawingMode::Opaque, glm::translate(glm::mat4(1.0f), { 2, 0, 10 }), MeshType::Static);
+        const Material& dragonMat = mes.material;
+        std::printf("Material: kd: %f, %f, %f, \nks: %f, %f, %f, \nshininess: %f, \ntransp: %f\n", dragonMat.kd.x, dragonMat.kd.y, dragonMat.kd.z, dragonMat.ks.x, dragonMat.ks.y, dragonMat.ks.z, dragonMat.shininess, dragonMat.transparency);
+    }*/
     //Mesh dragon = mergeMeshes(loadMesh("resources/tree.obj")); 
     
     
@@ -118,7 +125,7 @@ void Application::loadMeshes() {
     
     //m_gpuMeshes.emplace_back(dragon, DrawingMode::Opaque, glm::mat4(1.0f), MeshType::Static);
 
-    m_gpuMeshes.emplace_back(unitCube, DrawingMode::ReflectionMap, glm::translate(glm::mat4(1.0f), {0, 0, 3}), MeshType::Static);
+    m_gpuMeshes.emplace_back(unitCube, DrawingMode::ReflectionMap, glm::translate(glm::mat4(1.0f), {2, 8, 5}), MeshType::Static);
 }
 
 
@@ -152,6 +159,11 @@ void Application::loadShaders() {
         refractionMapBuilder.addStage(GL_VERTEX_SHADER, "shaders/reflectionmap_vert.glsl");
         refractionMapBuilder.addStage(GL_FRAGMENT_SHADER, "shaders/refractionmap_frag.glsl");
         m_refractionMapShader = refractionMapBuilder.build();
+
+        ShaderBuilder spotLightBlinnPhongBuilder;
+        spotLightBlinnPhongBuilder.addStage(GL_VERTEX_SHADER, "shaders/shader_vert.glsl");
+        spotLightBlinnPhongBuilder.addStage(GL_FRAGMENT_SHADER, "shaders/blinnphong_frag.glsl", "#define LIGHT_TYPE SPOT_LIGHT");
+        m_spotLightBlinnPhongShader = spotLightBlinnPhongBuilder.build();
     }
     catch (ShaderLoadingException e) {
         std::cerr << e.what() << std::endl;
@@ -159,7 +171,7 @@ void Application::loadShaders() {
 }
 
 void Application::initLights() {
-    m_pointLights.push_back(PointLight(glm::vec3{ 3,3,3 }, glm::vec3{ 1,1,1 }, {0.1, 0.6, 1.0}));
+    m_pointLights.push_back(PointLight(glm::vec3{ 3,3,3 }, glm::vec3{ 1,1,1 }, {0.1, 0.6, 1.0}, 30.0f));
 }
 
 
@@ -183,12 +195,15 @@ void Application::update()
 
         // Use ImGui for easy input/output of ints, floats, strings, etc...
         ImGui::Begin("Window");
+
         ImGui::DragFloat("BezierTime", &time, 0.004f); // Use ImGui::DragInt or ImGui::DragFloat for larger range of numbers.
         //ImGui::Text("Value is: %i", dummyInteger); // Use C printf formatting rules (%i is a signed integer)
         ImGui::SliderFloat("PBR Reflectivity", &reflectivityFloat, 0.0001f, 1.0f); 
         //ImGui::Text("Value is: %i", reflectivityFloat); 
         ImGui::Checkbox("Use material if no texture", &m_useMaterial);
         ImGui::SliderFloat("Camera speed", &m_mainCamera.m_translationSpeed, 0.01f, 2.0f);
+
+        ImGui::Text("Press spacebar to add a new point light");
         ImGui::End();
 
         // Clear the screen
@@ -271,6 +286,8 @@ void Application::update()
                     currentShader.setUniformVec3("lightColor", pointLight.lightColor);
                     currentShader.setUniformVec3("lightIntensities", pointLight.lightIntensities);
                     currentShader.setUniformVec3("lightPosition", pointLight.position);
+                    currentShader.setUniformFloat("attenLinear", pointLight.attenuationLinearCoefficient);
+                    currentShader.setUniformFloat("attenQuadratic", pointLight.attenuationQuadraticCoefficient);
                     mesh.draw(currentShader);
                 }
 
