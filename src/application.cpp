@@ -103,7 +103,7 @@ void Application::onMouseReleased(int button, int mods)
 }
 
 void Application::loadMeshes() {
-    auto meshes = loadMesh("resources/forest3.obj");
+    auto meshes = loadMesh("resources/forest4.obj");
     for (Mesh mes : meshes) {
         m_gpuMeshes.emplace_back(mes, DrawingMode::Opaque, glm::mat4(1.0f), MeshType::Static);
         const Material& dragonMat = mes.material;
@@ -171,6 +171,8 @@ void Application::update()
     auto prevTime = high_resolution_clock::now();
 
     int dummyInteger = 0;
+    float time = 0.0f;
+    float reflectivityFloat = 0.02f;
 
     glEnable(GL_CULL_FACE); // Cull face, free optimization
 
@@ -181,8 +183,10 @@ void Application::update()
 
         // Use ImGui for easy input/output of ints, floats, strings, etc...
         ImGui::Begin("Window");
-        ImGui::DragInt("This is an integer input", &dummyInteger); // Use ImGui::DragInt or ImGui::DragFloat for larger range of numbers.
-        ImGui::Text("Value is: %i", dummyInteger); // Use C printf formatting rules (%i is a signed integer)
+        ImGui::DragFloat("BezierTime", &time, 0.004f); // Use ImGui::DragInt or ImGui::DragFloat for larger range of numbers.
+        //ImGui::Text("Value is: %i", dummyInteger); // Use C printf formatting rules (%i is a signed integer)
+        ImGui::SliderFloat("PBR Reflectivity", &reflectivityFloat, 0.0001f, 1.0f); 
+        //ImGui::Text("Value is: %i", reflectivityFloat); 
         ImGui::Checkbox("Use material if no texture", &m_useMaterial);
         ImGui::SliderFloat("Camera speed", &m_mainCamera.m_translationSpeed, 0.01f, 2.0f);
         ImGui::End();
@@ -236,6 +240,7 @@ void Application::update()
                 currentShader.setUniformVec3("viewPos", m_mainCamera.position());
                 currentShader.setUniformBool("useMaterial", true);
                 currentShader.setUniformBool("useBlinnPhong", true);
+                currentShader.setUniformFloat("reflectivity", reflectivityFloat);
 
                 if (mesh.hasTextureCoords()) {
                     //std::cout << mesh.getTex();
@@ -318,10 +323,10 @@ void Application::update()
         glm::vec3 m_points[10] = { 
             glm::vec3(3, 3, 3), 
             glm::vec3(0, 1, 2) , glm::vec3(3, -2, 1) , glm::vec3(-3, -3, -3),
-            glm::vec3(-3, -3, -3) , glm::vec3(3, -2, 1) , glm::vec3(2, 1, -3),
+            glm::vec3(1, 4, 2) , glm::vec3(3, -2, 1) , glm::vec3(2, 1, -3),
             glm::vec3(2, 1, -3) , glm::vec3(0, 1, 2) , glm::vec3(3, 3, 3)
         };
-        m_pointLights[0].position = splines((dummyInteger*1.0f)/250.0f, m_points, 10);
+        m_pointLights[0].position = splines(time, m_points, 10);
         std::cout << splines(0.0f, m_points, 4).r;
         
     }

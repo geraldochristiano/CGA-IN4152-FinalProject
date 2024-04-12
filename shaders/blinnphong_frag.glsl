@@ -24,6 +24,7 @@ uniform bool hasTexCoords;
 uniform sampler2D kdtex;
 uniform sampler2D normaltex;
 uniform sampler2D roughnesstex;
+uniform float reflectivity;
 
 uniform vec3 lightColor = vec3(1,1,1);
 uniform vec3 lightIntensities = vec3(0, 0.5, 1.0);
@@ -50,7 +51,7 @@ layout (location = 0) out vec4 fragColor;
 vec3 cookTorrance(vec3 lightVector, float roughness, vec3 reflectivity, vec3 color) 
 {
 	//roughness = roughness;
-	reflectivity = vec3(0.02f);
+	//reflectivity = vec3(0.02f);
     //vec3 lightVector = normalize(lightPos - fragPosition);
     vec3 normalVector = normalize(fragNormal);
 
@@ -139,7 +140,7 @@ void main()
 		if(hasTexCoords && length(material.kd) < 0.005f) {
 			vec3 color = texture(kdtex, fragTexCoord).rgb;
 			float roughness = texture(roughnesstex, fragTexCoord).r;
-			fragColor = vec4(cookTorrance(L, roughness, material.ks, color)*lightColor, 1.0f);
+			fragColor = vec4(cookTorrance(L, roughness, vec3(reflectivity), color)*lightColor, 1.0f);
 			
 		}
 	}
