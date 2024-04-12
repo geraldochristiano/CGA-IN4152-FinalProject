@@ -18,13 +18,23 @@ GPUMesh::GPUMesh(const Mesh& cpuMesh)
 {
     // Create uniform buffer to store mesh material (https://learnopengl.com/Advanced-OpenGL/Advanced-GLSL)
     GPUMaterial gpuMaterial(cpuMesh.material);
+
+    m_hasTextureCoords = static_cast<bool>(cpuMesh.material.kdTexture);
+    if (m_hasTextureCoords) {
+        kdTex = new Texture(cpuMesh.material.kdTexture.get());
+        //kdTex = new Texture(cpuMesh.material.kdTexture.get());
+        normalTex = new Texture(cpuMesh.material.normalTexture.get());
+        roughnessTex = new Texture(cpuMesh.material.roughnessTexture.get());
+        std::cout << "HEY NEW TEX";
+        std::cout << kdTex;
+    }
     //this->mat = cpuMesh.material;
     glCreateBuffers(1, &m_uboMaterial);
     glNamedBufferData(m_uboMaterial, sizeof(GPUMaterial), &gpuMaterial, GL_STATIC_DRAW);
 
     // Figure out if this mesh has texture coordinates
 
-    m_hasTextureCoords = static_cast<bool>(cpuMesh.material.kdTexture);
+    
 
     // Create Element(/Index) Buffer Objects and Vertex Buffer Object.
     glCreateBuffers(1, &m_ibo);
@@ -97,6 +107,7 @@ bool GPUMesh::hasTextureCoords() const
     return m_hasTextureCoords;
 }
 
+
 void GPUMesh::draw(const Shader& drawingShader)
 {
     // Bind material data uniform (we assume that the uniform buffer objectg is always called 'Material')
@@ -118,6 +129,9 @@ void GPUMesh::moveInto(GPUMesh&& other)
     m_vbo = other.m_vbo;
     m_vao = other.m_vao;
     m_uboMaterial = other.m_uboMaterial;
+    kdTex = other.kdTex;
+    normalTex = other.normalTex;
+    roughnessTex = other.roughnessTex;
 
     other.m_numIndices = 0;
     other.m_hasTextureCoords = other.m_hasTextureCoords;

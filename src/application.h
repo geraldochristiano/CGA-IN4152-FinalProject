@@ -16,6 +16,7 @@ private:
     void registerCallbacks();
     void loadMeshes();
     void loadShaders();
+    void loadTextures();
     void initLights();
     //void initEnvironmentMap();
 
@@ -41,6 +42,7 @@ private:
     // button - Integer that corresponds to numbers in https://www.glfw.org/docs/latest/group__buttons.html
     // mods - Any modifier buttons pressed
     void onMouseReleased(int button, int mods);
+
 
    /* void drawImGUI();*/
 private:

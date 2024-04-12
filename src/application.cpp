@@ -1,6 +1,7 @@
 #include "abstraction.h"
 #include "gpumesh.h"
 #include "light.h"
+
 // Always include window first (because it includes glfw, which includes GL which needs to be included AFTER glew).
 // Can't wait for modules to fix this stuff...
 #include <framework/disable_all_warnings.h>
@@ -22,7 +23,7 @@ DISABLE_WARNINGS_POP()
 #include <iostream>
 #include <vector>
 #include "application.h"
-
+#include <tinyobjloader/tiny_obj_loader.h>
 const int reflMapCubemapTextureUnit = 1;
 const int skyboxCubemapTextureUnit = 2;
 const glm::vec3 cameraStartingPosition = { 0,0,-3 };
@@ -43,11 +44,13 @@ Application::Application()
     
     registerCallbacks();
     loadMeshes();
+    loadTextures();
     loadShaders();
     initLights();
-
-    m_texture2 = new Texture("resources/textures/Brick/brick-wall_normal-ogl.png");
-    prepareShaders();
+    auto a = std::make_shared<Image>("resources/textures/Brick/brick-wall_normal-ogl.png");
+    m_texture2 = new Texture(a.get());
+    //std::cout << m_texture2;
+    //prepareShaders();
     //dictionary.append("key", Texture("resources/checkerboard.png"));
 }
 
@@ -65,6 +68,10 @@ void Application::registerCallbacks() {
         else if (action == GLFW_RELEASE)
             onMouseReleased(button, mods);
         });
+}
+
+void Application::loadTextures() {
+    return; // m_gpuMeshes.
 }
 
 void Application::onKeyPressed(int key, int mods)
@@ -95,10 +102,10 @@ void Application::onMouseReleased(int button, int mods)
 }
 
 void Application::loadMeshes() {
-    Mesh dragon = mergeMeshes(loadMesh("resources/dragon.obj")); 
+    Mesh dragon = mergeMeshes(loadMesh("resources/cube.obj")); 
     const Material& dragonMat = dragon.material;
     std::printf("Material: kd: %f, %f, %f, \nks: %f, %f, %f, \nshininess: %f, \ntransp: %f\n", dragonMat.kd.x, dragonMat.kd.y, dragonMat.kd.z, dragonMat.ks.x, dragonMat.ks.y, dragonMat.ks.z, dragonMat.shininess, dragonMat.transparency);
-
+    
     Mesh unitCube = flatNormalUnitCube();
     const Material& cubeMat = unitCube.material;
     std::printf("Material: kd: %f, %f, %f, \nks: %f, %f, %f, \nshininess: %f, \ntransp: %f\n", cubeMat.kd.x, cubeMat.kd.y, cubeMat.kd.z, cubeMat.ks.x, cubeMat.ks.y, cubeMat.ks.z, cubeMat.shininess, cubeMat.transparency);
@@ -222,6 +229,19 @@ void Application::update()
                 currentShader.setUniformVec3("viewPos", m_mainCamera.position());
                 currentShader.setUniformBool("useMaterial", true);
                 currentShader.setUniformBool("useBlinnPhong", true);
+
+                if (mesh.hasTextureCoords()) {
+                    //std::cout << mesh.getTex();
+                    //m_texture.bind(GL_TEXTURE0);
+                    currentShader.setUniformBool("hasTexCoords", true);
+                    mesh.kdTex->bind(GL_TEXTURE0);
+                    currentShader.setUniformInt("kdtex", 0);
+                    mesh.normalTex->bind(GL_TEXTURE1);
+                    currentShader.setUniformInt("normaltex", 1);
+                    mesh.roughnessTex->bind(GL_TEXTURE2);
+                    currentShader.setUniformInt("roughnesstex", 2);
+                }
+
                 for (int i = 0; i < m_pointLights.size(); i++) {
                     // With opaque mesh, don't blend with background and applies ambient lighting only for the first light
                     if (i == 0) {
@@ -326,6 +346,29 @@ Mesh flatNormalUnitCube() {
         glm::uvec3{1u, 4u, 13u}, glm::uvec3{13u, 4u, 16u},
     };
     return out;
+}
+
+//Cubic bezier
+static glm::vec3 bezier3(float t, glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, glm::vec3 p3) {
+    float it = 1.0f - t;
+    return it * it * it * p0 + 3 * t * it * it * p1 + 3 * t * t * it * p2 + t * t * t + p3;
+}
+
+
+static glm::vec3 splines(float t, glm::vec3* points, int size) {
+    if (size < 4) {
+        return glm::vec3(0.0f);
+    }
+    if ((size - 4) % 3 != 0) {
+        return glm::vec3(0.0f);
+    }
+    int nSplines = (size - 1) / 3;
+    float tval = fmod(t, nSplines);
+    int index = (int)floor(t);
+
+
+
+    return bezier3((tval - index), points[0 + index * 3], points[1 + index * 3], points[2 + index * 3], points[3 + index * 3]);
 }
 
 int main()

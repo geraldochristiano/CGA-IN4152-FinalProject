@@ -3,6 +3,7 @@
 #include <framework/disable_all_warnings.h>
 #include <framework/mesh.h>
 #include <framework/shader.h>
+#include "texture.h"
 DISABLE_WARNINGS_PUSH()
 #include <glm/vec3.hpp>
 DISABLE_WARNINGS_POP()
@@ -35,7 +36,7 @@ public:
 
     // Generate a number of GPU meshes from a particular model file.
     // Multiple meshes may be generated if there are multiple sub-meshes in the file
-    static std::vector<GPUMesh> loadMeshGPU(std::filesystem::path filePath);
+    std::vector<GPUMesh> loadMeshGPU(std::filesystem::path filePath);
 
     // Cannot copy a GPU mesh because it would require reference counting of GPU resources.
     GPUMesh& operator=(const GPUMesh&) = delete;
@@ -61,4 +62,8 @@ private:
     GLuint m_uboMaterial { INVALID };
 public:
     //Material mat;
+    Texture* kdTex;
+    Texture* roughnessTex;
+    Texture* normalTex;
+
 };

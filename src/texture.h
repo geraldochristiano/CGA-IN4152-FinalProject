@@ -5,6 +5,7 @@ DISABLE_WARNINGS_PUSH()
 DISABLE_WARNINGS_POP()
 #include <exception>
 #include <filesystem>
+#include <framework/image.h>
 #include <framework/opengl_includes.h>
 
 
@@ -15,6 +16,7 @@ struct ImageLoadingException : public std::runtime_error {
 class Texture {
 public:
     Texture(std::filesystem::path filePath);
+    Texture(const Image* image);
     Texture(const Texture&) = delete;
     Texture(Texture&&);
     ~Texture();
