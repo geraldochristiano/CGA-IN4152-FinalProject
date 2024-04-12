@@ -1,0 +1,18 @@
+# Blender 4.0.2 MTL File: 'cube.blend'
+# www.blender.org
+
+newmtl Material.003
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+Ps 0.000000
+Pc 0.000000
+Pcr 0.030000
+aniso 0.000000
+anisor 0.000000
+map_Kd textures/Brick/brick-wall_albedo.png
+map_Pm textures/Brick/brick-wall_metallic.png
+map_Pr textures/Brick/brick-wall_roughness.png
+norm textures/Brick/brick-wall_normal-ogl.png
