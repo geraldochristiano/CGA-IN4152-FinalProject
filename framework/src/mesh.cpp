@@ -1,4 +1,5 @@
 #include "mesh.h"
+#include "../../src/texture.h"
 // Suppress warnings in third-party code.
 #include <framework/disable_all_warnings.h>
 DISABLE_WARNINGS_PUSH()
@@ -131,16 +132,25 @@ std::vector<Mesh> loadMesh(const std::filesystem::path& file, bool centerAndNorm
                 //std::cout << objMaterial.diffuse_texname << std::endl;
                 if (!objMaterial.diffuse_texname.empty()) {
                     mesh.material.kdTexture = std::make_shared<Image>(baseDir / objMaterial.diffuse_texname);
+                    //Texture *a = new Texture(mesh.material.kdTexture.get());
+                    //std::cout << a;
+                    std::cout << "HIIIIIIII";
+                }
+                if (!objMaterial.roughness_texname.empty()) {
+                    //Blender puts roughness in map_ns for some reason, which is spec map in tinyobj
+                    mesh.material.roughnessTexture = std::make_shared<Image>(baseDir / objMaterial.roughness_texname);
+                    Texture* a = new Texture(mesh.material.roughnessTexture.get());
+                    std::cout << "HIIIIIIII";
+                }
+                if (!objMaterial.normal_texname.empty()) {
+                    mesh.material.normalTexture = std::make_shared<Image>(baseDir / objMaterial.normal_texname);
+                    Texture* a = new Texture(mesh.material.normalTexture.get());
+                    std::cout << a;
+                    std::cout << "HIIIIIIII";
                 }
                 mesh.material.ks = construct_vec3(objMaterial.specular);
                 mesh.material.shininess = objMaterial.shininess;
                 mesh.material.transparency = objMaterial.dissolve;
-                if (!objMaterial.roughness_texname.empty()) {
-                    mesh.material.roughnessTexture = std::make_shared<Image>(baseDir / objMaterial.roughness_texname);
-                }
-                if (!objMaterial.normal_texname.empty()) {
-                    mesh.material.normalTexture = std::make_shared<Image>(baseDir / objMaterial.normal_texname);
-                }
             }
 
             out.push_back(std::move(mesh));

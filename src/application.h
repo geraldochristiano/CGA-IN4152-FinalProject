@@ -18,6 +18,9 @@ private:
     void loadShaders();
     void loadTextures();
     void initLights();
+    glm::vec3 bezier3(float t, glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, glm::vec3 p3);
+    glm::vec3 splines(float t, glm::vec3* points, int size);
+    void splines2(int size);
     //void initEnvironmentMap();
 
     // In here you can handle key presses
@@ -76,6 +79,7 @@ private:
     Texture m_texture;
 
     Texture *m_texture2;
+    
     bool m_useMaterial{ true };
 
     // Projection and view matrices for you to fill in and use

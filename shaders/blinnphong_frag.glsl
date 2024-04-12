@@ -5,6 +5,7 @@
 #define POINT_LIGHT 0
 #define DIRECTIONAL_LIGHT 1
 #define SPOT_LIGHT 2
+#define PI 3.14159265358979323;
 
 //$define_string
 
@@ -19,6 +20,10 @@ uniform bool useMaterial = false;
 uniform bool useBlinnPhong = true;
 uniform bool applyAmbientLighting;
 uniform vec3 viewPos;
+uniform bool hasTexCoords;
+uniform sampler2D kdtex;
+uniform sampler2D normaltex;
+uniform sampler2D roughnesstex;
 
 uniform vec3 lightColor = vec3(1,1,1);
 uniform vec3 lightIntensities = vec3(0, 0.5, 1.0);
@@ -41,6 +46,47 @@ in vec3 fragNormal;
 in vec2 fragTexCoord;
 
 layout (location = 0) out vec4 fragColor;
+
+vec3 cookTorrance(vec3 lightVector, float roughness, vec3 reflectivity, vec3 color) 
+{
+	//roughness = 0.001f;
+	//reflectivity = vec3(1.0f);
+    //vec3 lightVector = normalize(lightPos - fragPosition);
+    vec3 normalVector = normalize(fragNormal);
+
+    
+	if (true) {
+        vec3 viewVector = normalize(viewPos - fragPosition);
+        vec3 halfway = normalize(lightVector + viewVector);
+
+		float LN = clamp(dot((lightVector), normalVector), 0.0001f, 1.0f);
+		float VN = clamp(dot((viewVector), normalVector), 0.0001f, 1.0f);
+		float HN = clamp(dot((halfway), normalVector), 0.0001f, 1.0f);
+		float VH = clamp(dot((viewVector), halfway), 0.0001f, 1.0f);
+
+        //Fresnel
+        vec3 fresnel = reflectivity + (vec3(1.0f) - reflectivity) * pow((1.0f - (VH)), 5.0f);
+        //float kd = 1 - ks;
+        float a = roughness*roughness;
+        float pi = PI;
+        float GGX = (a*a)/(pi * pow((pow(HN, 2)*(a*a - 1) + 1), 2));
+        //float G1 = (2*dot(halfway, normalVector)*(dot(viewVector, normalVector)))/(dot(viewVector, halfway));
+        //float G2 = (2*dot(halfway, normalVector)*(dot(lightVector, normalVector)))/(dot(viewVector, halfway));
+		float GSmith1 = VN/(VN * (1.0f - (a / 2.0f)) + (a / 2.0f));
+		float GSmith2 = LN/(LN * (1.0f - (a / 2.0f)) + (a / 2.0f));
+        //float G = min(1.0f, min(G1, G2));
+		float G = GSmith1*GSmith2;
+        vec3 kd = 1.0f - fresnel;
+        vec3 spec = (fresnel*GGX*G)/(4.0f*VN*LN);
+        vec3 BRDF = LN*((spec) + (kd*color)/pi);
+        //vec3 reflectVector = normalize(2*(LN)*fragNormal-(lightVector));
+        //float RV = max(dot(fragNormal, halfway), 0.0f);
+        //float spec = pow(RV, alpha);
+        return BRDF;
+    }
+
+
+}
 
 void main()
 {	
@@ -82,5 +128,13 @@ void main()
 			vec3 specularColor = specularStrength * (lightIntensities.b * lightColor) * material.ks;
 			fragColor = vec4(ambientColor + diffuseColor + specularColor, material.transparency);
 		}
+
+		if(hasTexCoords) {
+			vec3 color = texture(kdtex, fragTexCoord).rgb;
+			float roughness = texture(roughnesstex, fragTexCoord).a;
+			fragColor = vec4(cookTorrance(L, roughness, material.ks, color)*lightColor, 1.0f);
+			
+		}
 	}
 }
+

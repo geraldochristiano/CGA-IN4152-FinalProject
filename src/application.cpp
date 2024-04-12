@@ -49,6 +49,7 @@ Application::Application()
     initLights();
     auto a = std::make_shared<Image>("resources/textures/Brick/brick-wall_normal-ogl.png");
     m_texture2 = new Texture(a.get());
+    //glm::vec3 m_points[4] = { glm::vec3(3, 3, 3), glm::vec3(0, 1, 2) , glm::vec3(3, -2, 1) , glm::vec3(-3, -3, -3) };
     //std::cout << m_texture2;
     //prepareShaders();
     //dictionary.append("key", Texture("resources/checkerboard.png"));
@@ -69,6 +70,8 @@ void Application::registerCallbacks() {
             onMouseReleased(button, mods);
         });
 }
+
+
 
 void Application::loadTextures() {
     return; // m_gpuMeshes.
@@ -155,6 +158,7 @@ void Application::loadShaders() {
 void Application::initLights() {
     m_pointLights.push_back(PointLight(glm::vec3{ 3,3,3 }, glm::vec3{ 1,1,1 }, {0.1, 0.6, 1.0}));
 }
+
 
 
 void Application::update()
@@ -307,6 +311,16 @@ void Application::update()
         //duration<double, std::milli> diff = currTime - prevTime;
         //std::cout << diff.count() << " ms" << std::endl;
         //prevTime = currTime;   
+        //glm::vec3 a = glm::vec3(0.0f);
+        glm::vec3 m_points[10] = { 
+            glm::vec3(3, 3, 3), 
+            glm::vec3(0, 1, 2) , glm::vec3(3, -2, 1) , glm::vec3(-3, -3, -3),
+            glm::vec3(-3, -3, -3) , glm::vec3(3, -2, 1) , glm::vec3(2, 1, -3),
+            glm::vec3(2, 1, -3) , glm::vec3(0, 1, 2) , glm::vec3(3, 3, 3)
+        };
+        m_pointLights[0].position = splines((dummyInteger*1.0f)/250.0f, m_points, 10);
+        std::cout << splines(0.0f, m_points, 4).r;
+        
     }
 }
 
@@ -349,13 +363,13 @@ Mesh flatNormalUnitCube() {
 }
 
 //Cubic bezier
-static glm::vec3 bezier3(float t, glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, glm::vec3 p3) {
+glm::vec3 Application::bezier3(float t, glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, glm::vec3 p3) {
     float it = 1.0f - t;
-    return it * it * it * p0 + 3 * t * it * it * p1 + 3 * t * t * it * p2 + t * t * t + p3;
+    return (it * it * it * p0) + (3 * t * it * it * p1) + (3 * t * t * it * p2) + (t * t * t * p3);
 }
 
 
-static glm::vec3 splines(float t, glm::vec3* points, int size) {
+glm::vec3 Application::splines(float t, glm::vec3* points, int size) {
     if (size < 4) {
         return glm::vec3(0.0f);
     }
@@ -364,12 +378,15 @@ static glm::vec3 splines(float t, glm::vec3* points, int size) {
     }
     int nSplines = (size - 1) / 3;
     float tval = fmod(t, nSplines);
-    int index = (int)floor(t);
+    int index = (int)floor(tval);
 
+    
 
 
     return bezier3((tval - index), points[0 + index * 3], points[1 + index * 3], points[2 + index * 3], points[3 + index * 3]);
 }
+
+
 
 int main()
 {
